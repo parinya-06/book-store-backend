@@ -1,6 +1,5 @@
 import { Injectable, LoggerService as Logger } from '@nestjs/common';
-// import chalk from 'chalk';
-const chalk = require('chalk');
+import chalk from 'chalk';
 
 @Injectable()
 export class LoggerService implements Logger {

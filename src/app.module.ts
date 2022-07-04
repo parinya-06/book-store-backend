@@ -12,7 +12,6 @@ import configuration from './config/configuration';
       load: [configuration],
       isGlobal: true,
     }),
-    // MongooseModule.forRoot('mongodb://localhost/book-store'),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
