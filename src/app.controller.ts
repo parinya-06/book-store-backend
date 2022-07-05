@@ -25,8 +25,6 @@ export class AppController {
     type: loginDto,
   })
   async login(@Request() req) {
-    console.log('login')
-    // console.log(req)
     return this.authService.login(req.user)
   }
 }

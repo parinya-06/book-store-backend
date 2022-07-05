@@ -7,8 +7,11 @@ class CreateUserDto {
   @ApiProperty({ type: String, example: 'testing001' })
   password: string
 
-  @ApiProperty({ type: String, example: 'test 001' })
-  name: string
+  @ApiProperty({ type: String, example: 'test' })
+  firstname: string
+
+  @ApiProperty({ type: String, example: '001' })
+  lastname: string
 
   @ApiProperty({ type: String, example: 'user' })
   role: string
