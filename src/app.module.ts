@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { LoggerModule } from './logger/logger.module';
-import configuration from './config/configuration';
+import { Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { LoggerModule } from './logger/logger.module'
+import { AuthModule } from './auth/auth.module'
+import { UsersModule } from './users/users.module'
+import configuration from './config/configuration'
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import configuration from './config/configuration';
       inject: [ConfigService],
     }),
     LoggerModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
