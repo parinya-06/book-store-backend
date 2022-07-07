@@ -16,6 +16,9 @@ import CreateUserDto from './dto/create-user.dto'
 import { User } from './schemas/user.schema'
 import { UpdateUsersDto } from './dto/update-user-dto'
 import FilterUserDto from './dto/filter-user.dto'
+import { RegisterValidationPipe } from '../pipe/register-validation.pipe'
+import enabledUserDto from './dto/enabled-user.dto'
+import { EnabledValidationPipe } from '../pipe/enabled-validation.pipe'
 
 @ApiTags('users')
 @Controller('users')
@@ -43,7 +46,7 @@ export class UsersController {
   }
 
   @Post('register')
-  create(@Body() createUserDto: CreateUserDto) {
+  create(@Body(RegisterValidationPipe) createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto)
   }
 
@@ -52,6 +55,25 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUsersDto: UpdateUsersDto,
+  ) {
+    try {
+      const existingUsers = await this.usersService.findById(id)
+      if (!existingUsers) {
+        throw new NotFoundException(`User #${id} not found`)
+      } else {
+        return this.usersService.update(id, updateUsersDto)
+      }
+    } catch (error) {
+      this.logger.error(error)
+      throw new NotFoundException(`User #${id} not found`)
+    }
+  }
+
+  @Put('enabled/:id')
+  @ApiBody({ type: enabledUserDto })
+  async enabledUser(
+    @Param('id') id: string,
+    @Body(EnabledValidationPipe) updateUsersDto: UpdateUsersDto,
   ) {
     try {
       const existingUsers = await this.usersService.findById(id)

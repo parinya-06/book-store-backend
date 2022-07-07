@@ -41,4 +41,10 @@ export class UsersService {
       .lean()
     return `delete user by id:${deletedUser._id},username:${deletedUser.username} succesful!!!`
   }
+
+  async enabledUser(id: string, updateUsersDto: UpdateUsersDto) {
+    return this.userModel
+      .findOneAndUpdate({ _id: id }, { $set: updateUsersDto }, { new: true })
+      .lean()
+  }
 }

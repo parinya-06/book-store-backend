@@ -41,7 +41,7 @@ export class User {
   role?: string
 
   @Prop({
-    type: String,
+    type: Boolean,
     default: true,
   })
   enabled?: boolean

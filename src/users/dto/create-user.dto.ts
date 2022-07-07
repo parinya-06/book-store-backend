@@ -16,7 +16,7 @@ class CreateUserDto {
   @ApiProperty({ type: String, example: 'user' })
   role: string
 
-  @ApiProperty({ type: String, example: 'true' })
+  @ApiProperty({ type: Boolean, example: false })
   enabled: boolean
 }
 export default CreateUserDto
