@@ -6,7 +6,7 @@ export const configSwagger = (app: INestApplication): void => {
     .setTitle('Book Store example')
     .setDescription('The books API description')
     .setVersion('1.0')
-    .addTag('books')
+    // .addTag('book-store')
     .build()
 
   const document = SwaggerModule.createDocument(app, config)
