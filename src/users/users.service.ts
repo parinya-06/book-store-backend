@@ -29,6 +29,20 @@ export class UsersService {
     return this.userModel.find(filter).lean()
   }
 
+  async reportNewUsers(): Promise<User[]> {
+    const nowTime = new Date()
+    const today = nowTime.toLocaleDateString(`fr-CA`).split('/').join('-')
+    const usersData = await this.userModel
+      .find({
+        createdAt: {
+          $gte: `${today}T00:00:00.000+00:00`,
+          $lt: `${today}T23:59:59.999+00:00`,
+        },
+      })
+      .lean()
+    return usersData
+  }
+
   async update(id: string, updateUsersDto: UpdateUsersDto) {
     return this.userModel
       .findOneAndUpdate({ _id: id }, { $set: updateUsersDto }, { new: true })
@@ -40,11 +54,5 @@ export class UsersService {
       .findByIdAndRemove({ _id: id })
       .lean()
     return `delete user by id:${deletedUser._id},username:${deletedUser.username} succesful!!!`
-  }
-
-  async enabledUser(id: string, updateUsersDto: UpdateUsersDto) {
-    return this.userModel
-      .findOneAndUpdate({ _id: id }, { $set: updateUsersDto }, { new: true })
-      .lean()
   }
 }

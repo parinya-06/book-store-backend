@@ -31,6 +31,11 @@ export class UsersController {
     return this.usersService.findAll()
   }
 
+  @Get('report')
+  getReport(): Promise<User[]> {
+    return this.usersService.reportNewUsers()
+  }
+
   @Get(':filter')
   getUserFilter(@Query() filter: FilterUserDto): Promise<User[]> {
     if (filter.username) {
