@@ -8,11 +8,22 @@ import {
 @Injectable()
 export class RegisterValidationPipe implements PipeTransform {
   transform(value: any, metadata: ArgumentMetadata) {
-    if (isNaN(value.lastname) && isNaN(value.role) && isNaN(value.enabled)) {
+    if (!value.username) {
       throw new BadRequestException(
-        `Validation failed. "${value}" is not a no data`,
+        `Validation failed. "username" is not a no data`,
       )
     }
-    return value
+    if (!value.password) {
+      throw new BadRequestException(
+        `Validation failed. "password" is not a no data`,
+      )
+    }
+    if (!value.firstname) {
+      throw new BadRequestException(
+        `Validation failed. "firstname" is not a no data`,
+      )
+    } else {
+      return value
+    }
   }
 }

@@ -19,6 +19,7 @@ import FilterUserDto from './dto/filter-user.dto'
 import { RegisterValidationPipe } from '../pipe/register-validation.pipe'
 import enabledUserDto from './dto/enabled-user.dto'
 import { EnabledValidationPipe } from '../pipe/enabled-validation.pipe'
+import * as bcrypt from 'bcrypt'
 
 @ApiTags('users')
 @Controller('users')
@@ -51,8 +52,14 @@ export class UsersController {
   }
 
   @Post('register')
-  create(@Body(RegisterValidationPipe) createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto)
+  async create(@Body(RegisterValidationPipe) createUserDto: CreateUserDto) {
+    const saltOrRounds = 10
+    const password = createUserDto.password
+    const hashPassword = await bcrypt.hash(password, saltOrRounds)
+    return this.usersService.create({
+      ...createUserDto,
+      password: hashPassword,
+    })
   }
 
   @Put(':id')
