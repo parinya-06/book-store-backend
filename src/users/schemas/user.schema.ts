@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 
 export type UserDocument = User & Document
-
 @Schema({
   collection: 'users',
   timestamps: true,
@@ -10,6 +9,8 @@ export type UserDocument = User & Document
 })
 export class User {
   @Prop({
+    index: true,
+    unique: true,
     type: String,
     required: true,
   })
@@ -45,6 +46,13 @@ export class User {
     default: true,
   })
   enabled?: boolean
+
+  @Prop({
+    type: String,
+    required: false,
+    default: null,
+  })
+  refreshToken?: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)
