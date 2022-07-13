@@ -1,51 +1,52 @@
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { User, UserDocument } from './schemas/user.schema'
 import { FilterQuery, Model } from 'mongoose'
-import CreateUserDto from './dto/create-user.dto'
-import { UpdateUsersDto } from './dto/update-user-dto'
+import { User, UserDocument } from './schemas/user.schema'
+import CreateUserDTO from './dto/create-user.dto'
+import { UpdateUserDTO } from './dto/update-user-dto'
+import { PaginationQueryDTO } from './dto/pagination-query.dto'
 
 @Injectable()
 export class UsersService {
   @InjectModel(User.name) private userModel: Model<UserDocument>
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    return this.userModel.create(createUserDto)
+  async create(createUserDTO: CreateUserDTO): Promise<User> {
+    return this.userModel.create(createUserDTO)
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().lean()
+  async findAll(paginationQuery: PaginationQueryDTO): Promise<User[]> {
+    const { limit, offset } = paginationQuery
+    return this.userModel.find().skip(offset).limit(limit).lean()
   }
 
   async findById(id: string): Promise<User> {
     return this.userModel.findOne({ _id: id }).lean()
   }
 
-  async findUsers(username: string) {
-    return this.userModel.find({ username: username }).lean()
+  async findByUsername(username: string) {
+    return this.userModel.find({ username }).lean()
   }
 
-  async filterUser(filter: FilterQuery<UserDocument>) {
+  async filterUsers(filter: FilterQuery<UserDocument>) {
     return this.userModel.find(filter).lean()
   }
 
   async reportNewUsers(): Promise<User[]> {
     const nowTime = new Date()
     const today = nowTime.toLocaleDateString(`fr-CA`).split('/').join('-')
-    const usersData = await this.userModel
+    return this.userModel
       .find({
         createdAt: {
           $gte: `${today}T00:00:00.000+00:00`,
-          $lt: `${today}T23:59:59.999+00:00`,
+          $lte: `${today}T23:59:59.999+00:00`,
         },
       })
       .lean()
-    return usersData
   }
 
-  async update(id: string, updateUsersDto: UpdateUsersDto) {
+  async update(id: string, updateUsersDTO: UpdateUserDTO) {
     return this.userModel
-      .findOneAndUpdate({ _id: id }, { $set: updateUsersDto }, { new: true })
+      .findOneAndUpdate({ _id: id }, { $set: updateUsersDTO }, { new: true })
       .lean()
   }
 
