@@ -81,13 +81,16 @@ export class UsersController {
       if (!existingUsers) {
         throw new BadRequestException(`User #${id} not found`)
       }
-      const saltOrRounds = 10
-      const password = updateUsersDTO.password
-      const hashPassword = await bcrypt.hash(password, saltOrRounds)
-      return this.usersService.update(id, {
-        ...updateUsersDTO,
-        password: hashPassword,
-      })
+      if (updateUsersDTO.password) {
+        const saltOrRounds = 10
+        const password = updateUsersDTO.password
+        const hashPassword = await bcrypt.hash(password, saltOrRounds)
+        return this.usersService.update(id, {
+          ...updateUsersDTO,
+          password: hashPassword,
+        })
+      }
+      return this.usersService.update(id, updateUsersDTO)
     } catch (error) {
       this.logger.error(error)
       throw new InternalServerErrorException()
