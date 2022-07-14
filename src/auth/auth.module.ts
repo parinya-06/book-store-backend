@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { CacheModule, Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { UsersModule } from '../users/users.module'
@@ -10,6 +10,7 @@ import { AuthController } from './auth.controller'
 
 @Module({
   imports: [
+    CacheModule.register(),
     UsersModule,
     PassportModule,
     JwtModule.register({

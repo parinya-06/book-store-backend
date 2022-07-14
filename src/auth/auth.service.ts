@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common'
+import {
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
+import { Cache } from 'cache-manager'
 import { UsersService } from '../users/users.service'
 
 @Injectable()
@@ -8,15 +14,57 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsername(username)
-    const [{ password: checkPassword }] = user
-    const isMatch = await bcrypt.compare(password, checkPassword)
-    if (user && isMatch) {
-      const [{ password, ...result }] = user
-      return result
+    try {
+      const [{ password: checkPassword, enabled }] = user
+      if (!enabled) {
+        return false
+      }
+      const cachePassword: string = await this.cacheManager.get(username)
+      const indexLogin: number = await this.cacheManager.get('indexLogin')
+      if (!cachePassword) {
+        await this.cacheManager.set(username, checkPassword, { ttl: 1000 })
+        const isMatch = await bcrypt.compare(password, checkPassword)
+        if (user && isMatch) {
+          const [{ password, ...result }] = user
+          await this.cacheManager.reset()
+          return result
+        }
+      }
+      if (!indexLogin) {
+        await this.cacheManager.set('indexLogin', 1, { ttl: 1000 })
+      }
+      for (let i = 1; i <= indexLogin; i++) {
+        if (i === 1) {
+          await this.cacheManager.set('indexLogin', 2, { ttl: 1000 })
+        }
+        if (i === 2) {
+          await this.cacheManager.set('indexLogin', 3, { ttl: 30 })
+        }
+      }
+      const isMatch = await bcrypt.compare(password, cachePassword)
+      if (user && isMatch) {
+        const [{ password, ...result }] = user
+        await this.cacheManager.reset()
+        return result
+      }
+    } catch (error) {
+      return null
+    }
+    const indexLogin: number = await this.cacheManager.get('indexLogin')
+    if (indexLogin === 3) {
+      const [{ _id }] = user
+      await this.usersService.update(_id, {
+        enabled: false,
+      })
+      await this.updateBlockLogin(_id)
+      throw new UnauthorizedException(
+        `User has been blocked!!!,Please wait 30 seconds.`,
+      )
     }
     return null
   }
@@ -43,5 +91,14 @@ export class AuthService {
       accessToken,
       refreshToken,
     }
+  }
+
+  async updateBlockLogin(userId: string) {
+    setInterval(async () => {
+      await this.cacheManager.reset()
+      await this.usersService.update(userId, {
+        enabled: true,
+      })
+    }, 30000)
   }
 }
