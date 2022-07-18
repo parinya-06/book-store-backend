@@ -1,46 +1,68 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import {
   IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
   Length,
+  MaxLength,
+  MinLength,
 } from 'class-validator'
+import { ERole } from '../enums/enum-role'
 
 class CreateUserDTO {
-  @ApiProperty({ type: String, example: 'test001' })
+  @ApiProperty({
+    type: String,
+    example: 'test001',
+  })
   @IsString()
   @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(15)
   username: string
 
-  @ApiProperty({ type: String, example: 'testing001' })
+  @ApiProperty({
+    type: String,
+    example: 'testing001',
+  })
   @IsString()
-  @Length(6, 32)
+  @Length(8, 32)
   @IsNotEmpty()
   password: string
 
-  @ApiProperty({ type: String, example: 'test' })
+  @ApiProperty({
+    type: String,
+    example: 'test',
+  })
   @IsString()
   @IsNotEmpty()
+  @Length(1, 20)
   firstname: string
 
-  @ApiProperty({ type: String, example: '001', required: false })
+  @ApiPropertyOptional({
+    type: String,
+    example: '001',
+  })
   @IsOptional()
   @IsString()
+  @Length(1, 20)
   lastname: string
 
-  @ApiProperty({ type: String, example: 'user', required: false })
+  @ApiPropertyOptional({
+    type: String,
+    example: ERole.User,
+    enum: ERole,
+  })
   @IsOptional()
   @IsString()
-  role: string
+  roles: ERole
 
-  @ApiProperty({ type: Boolean, example: false, required: false })
+  @ApiPropertyOptional({
+    type: Boolean,
+    example: false,
+  })
   @IsOptional()
   @IsBoolean()
   enabled: boolean
-
-  @IsOptional()
-  @IsString()
-  refreshToken: string
 }
 export default CreateUserDTO
