@@ -23,6 +23,7 @@ import CreateUserDTO from './dto/create-user.dto'
 import { RolesGuard } from './guards/roles.guard'
 import { Roles } from './decorators/roles.decorator'
 import { UpdateUserDTO } from './dto/update-user-dto'
+import UpdateEnableUserDTO from './dto/updateEnable-user.dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto'
 
 import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
@@ -125,6 +126,7 @@ export class UsersController {
   //ระงับการใช้งานของสมาชิก
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(ERole.Admin)
+  @ApiBody({ type: UpdateEnableUserDTO })
   @Put(':id/enabled')
   async updateEnableUser(
     @Param('id', UpdateEnableUserValidationPipe) id: string,

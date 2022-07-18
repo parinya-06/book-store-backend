@@ -50,7 +50,6 @@ export class UsersService {
   }
 
   static matchRoles(roles: ERole[], userRoles: ERole) {
-    console.log(roles.includes(userRoles))
     return roles.includes(userRoles)
   }
 }
