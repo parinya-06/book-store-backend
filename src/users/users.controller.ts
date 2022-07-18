@@ -26,8 +26,8 @@ import { UpdateUserDTO } from './dto/update-user-dto'
 import UpdateEnableUserDTO from './dto/updateEnable-user.dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto'
 
-import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
 import { UpdateEnableUserValidationPipe } from '../pipes/updateEnableUser-validation.pipe'
 
 @ApiTags('users')
