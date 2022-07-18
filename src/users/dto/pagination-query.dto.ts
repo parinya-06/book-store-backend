@@ -1,14 +1,61 @@
-import { IsOptional, IsPositive } from 'class-validator'
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import dayjs from 'dayjs'
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator'
 
-export class PaginationQueryDTO {
-  @ApiProperty({ type: Number, required: false })
+export class PaginationQueryDto {
+  @ApiPropertyOptional({
+    type: Number,
+  })
   @IsOptional()
-  @IsPositive()
-  limit: number
+  @IsNumber()
+  page?: number
 
-  @ApiProperty({ type: Number, required: false })
+  @ApiPropertyOptional({
+    type: Number,
+  })
   @IsOptional()
-  @IsPositive()
-  offset: number
+  @IsNumber()
+  perPage?: number
+
+  @ApiPropertyOptional({
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  username?: string
+
+  @ApiPropertyOptional({
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  firstname?: string
+
+  @ApiPropertyOptional({
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  lastname?: string
+
+  @ApiPropertyOptional({
+    example: dayjs().startOf('days').toISOString(),
+  })
+  @IsDateString()
+  @IsOptional()
+  startDate?: string
+
+  @ApiPropertyOptional({
+    example: dayjs().endOf('days').toISOString(),
+  })
+  @IsDateString()
+  @IsOptional()
+  endDate?: string
+
+  @ApiPropertyOptional({
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  sort?: string
 }

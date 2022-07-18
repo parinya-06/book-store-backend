@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,116 +6,151 @@ import {
   InternalServerErrorException,
   Logger,
   Param,
-  Post,
   Put,
   Query,
+  Req,
+  UseGuards,
+  UsePipes,
 } from '@nestjs/common'
-import { ApiBody, ApiTags } from '@nestjs/swagger'
+import { ConfigService } from '@nestjs/config'
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger'
 import * as bcrypt from 'bcrypt'
-import { UsersService } from './users.service'
+import { FilterQuery } from 'mongoose'
+
 import { User } from './schemas/user.schema'
-import FilterUserDTO from './dto/filter-user.dto'
+import { UsersService } from './users.service'
 import CreateUserDTO from './dto/create-user.dto'
 import { UpdateUserDTO } from './dto/update-user-dto'
-import EnabledUserDTO from './dto/enabled-user.dto'
-import { PaginationQueryDTO } from './dto/pagination-query.dto'
+import { PaginationQueryDto } from './dto/pagination-query.dto'
+
+import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { UpdateEnableUserValidationPipe } from '../pipes/updateEnableUser-validation.pipe'
+import { RolesValidationPipe } from '../pipes/roles-validation.pipe'
 
 @ApiTags('users')
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private configService: ConfigService,
+  ) {}
   private readonly logger = new Logger(UsersController.name)
 
-  @Get('all/:pagination')
-  getUserAll(@Query() paginationQuery: PaginationQueryDTO): Promise<User[]> {
-    return this.usersService.findAll(paginationQuery)
-  }
-
-  @Get('report/newusers')
-  async getReport() {
-    const newUsers = await this.usersService.reportNewUsers()
-    if (newUsers.length === 0) {
-      throw new BadRequestException(`No New User!!!`)
-    }
-    const qtyUsers = newUsers.length
-    const dataReport = [
-      {
-        qtyNewUsers: qtyUsers,
-        newUsers: newUsers,
-      },
-    ]
-    return dataReport
-  }
-
-  @Get('filter/:filter')
-  getUserFilter(@Query() filter: FilterUserDTO): Promise<User[]> {
-    if (filter) {
-      return this.usersService.filterUsers(filter)
-    }
-    return null
-  }
-
-  @Post('register')
-  async create(@Body() createUserDTO: CreateUserDTO) {
-    const userExists = await this.usersService.findByUsername(
-      createUserDTO.username,
-    )
-    if (userExists.length != 0) {
-      throw new BadRequestException(`User already exists`)
-    }
-    const saltOrRounds = 10
-    const password = createUserDTO.password
-    const hashPassword = await bcrypt.hash(password, saltOrRounds)
-    return this.usersService.create({
-      ...createUserDTO,
-      password: hashPassword,
-    })
-  }
-
-  @Put(':id')
-  @ApiBody({ type: CreateUserDTO })
-  async update(@Param('id') id: string, @Body() updateUsersDTO: UpdateUserDTO) {
-    try {
-      const existingUsers = await this.usersService.findById(id)
-      if (!existingUsers) {
-        throw new BadRequestException(`User #${id} not found`)
+  //filter จาก ชื่อผู้ใช้งาน ชื่อ-นามสกุล, รายงานสมาชิกใหม่
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
+  @Get()
+  async getUsers(@Query() query: PaginationQueryDto): Promise<any> {
+    const {
+      page,
+      perPage,
+      username,
+      firstname,
+      lastname,
+      startDate,
+      endDate,
+      sort,
+      ...result
+    } = query
+    const filters: FilterQuery<User> = result
+    if (startDate && endDate) {
+      filters.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       }
-      if (updateUsersDTO.password) {
-        const saltOrRounds = 10
-        const password = updateUsersDTO.password
-        const hashPassword = await bcrypt.hash(password, saltOrRounds)
-        return this.usersService.update(id, {
+    }
+    if (username) {
+      filters.username = username
+    }
+    if (firstname) {
+      filters.firstname = firstname
+    }
+    if (lastname) {
+      filters.lastname = lastname
+    }
+    try {
+      const pagination = {
+        page,
+        perPage,
+      }
+      const [records, count] = await this.usersService.pagination(
+        filters,
+        pagination,
+        sort,
+      )
+      return {
+        ...pagination,
+        records,
+        count,
+      }
+    } catch (error) {
+      this.logger.error(error)
+      throw new InternalServerErrorException({
+        message: error.message ?? error,
+      })
+    }
+  }
+
+  //แก้ไขข้อมูลสมาชิก
+  @UseGuards(JwtAuthGuard)
+  @Put()
+  @ApiBody({ type: CreateUserDTO })
+  async update(
+    @Req() req,
+    @Body(UpdateValidationPipe) updateUsersDTO: UpdateUserDTO,
+  ): Promise<UpdateUserDTO> {
+    try {
+      const { userId } = req.user
+      const { password } = updateUsersDTO
+      if (password) {
+        const saltOrRounds = this.configService.get('saltOrRounds')
+        const hashedPassword = await bcrypt.hash(password, saltOrRounds)
+        return this.usersService.update(userId, {
           ...updateUsersDTO,
-          password: hashPassword,
+          password: hashedPassword,
         })
       }
-      return this.usersService.update(id, updateUsersDTO)
+      return this.usersService.update(userId, updateUsersDTO)
     } catch (error) {
       this.logger.error(error)
-      throw new InternalServerErrorException()
+      throw new InternalServerErrorException({
+        message: error.message ?? error,
+      })
     }
   }
 
+  //ระงับการใช้งานของสมาชิก
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
   @Put(':id/enabled')
-  @ApiBody({ type: EnabledUserDTO })
-  async enabledUser(
-    @Param('id') id: string,
+  async updateEnableUser(
+    @Param('id', UpdateEnableUserValidationPipe) id: string,
     @Body() updateUsersDTO: UpdateUserDTO,
-  ) {
+  ): Promise<UpdateUserDTO> {
     try {
-      const existingUser = await this.usersService.findById(id)
-      if (!existingUser) {
-        throw new BadRequestException(`User #${id} not found`)
-      }
       return this.usersService.update(id, updateUsersDTO)
     } catch (error) {
       this.logger.error(error)
-      throw new InternalServerErrorException()
+      throw new InternalServerErrorException({
+        message: error.message ?? error,
+      })
     }
   }
 
+  //ลบข้อมูลสมาชิก
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.usersService.delete(id)
+  async delete(@Param('id') id: string): Promise<User> {
+    try {
+      return this.usersService.delete(id)
+    } catch (error) {
+      this.logger.error(error)
+      throw new InternalServerErrorException({
+        message: error.message ?? error,
+      })
+    }
   }
 }
