@@ -6,8 +6,8 @@ import { Model } from 'mongoose'
 import { Cache } from 'cache-manager'
 
 import { UsersService } from '../users/users.service'
-import { User, UserDocument } from '../users/schemas/user.schema'
 import CreateUserDTO from '../users/dto/create-user.dto'
+import { User, UserDocument } from '../users/schemas/user.schema'
 
 @Injectable()
 export class AuthService {
