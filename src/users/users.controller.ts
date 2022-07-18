@@ -10,23 +10,24 @@ import {
   Query,
   Req,
   UseGuards,
-  UsePipes,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger'
 import * as bcrypt from 'bcrypt'
 import { FilterQuery } from 'mongoose'
 
+import { ERole } from './enums/enum-role'
 import { User } from './schemas/user.schema'
 import { UsersService } from './users.service'
 import CreateUserDTO from './dto/create-user.dto'
+import { RolesGuard } from './guards/roles.guard'
+import { Roles } from './decorators/roles.decorator'
 import { UpdateUserDTO } from './dto/update-user-dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto'
 
 import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UpdateEnableUserValidationPipe } from '../pipes/updateEnableUser-validation.pipe'
-import { RolesValidationPipe } from '../pipes/roles-validation.pipe'
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -39,8 +40,8 @@ export class UsersController {
   private readonly logger = new Logger(UsersController.name)
 
   //filter จาก ชื่อผู้ใช้งาน ชื่อ-นามสกุล, รายงานสมาชิกใหม่
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(ERole.Admin)
   @Get()
   async getUsers(@Query() query: PaginationQueryDto): Promise<any> {
     const {
@@ -122,8 +123,8 @@ export class UsersController {
   }
 
   //ระงับการใช้งานของสมาชิก
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(ERole.Admin)
   @Put(':id/enabled')
   async updateEnableUser(
     @Param('id', UpdateEnableUserValidationPipe) id: string,
@@ -140,8 +141,8 @@ export class UsersController {
   }
 
   //ลบข้อมูลสมาชิก
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(RolesValidationPipe) //เช็คว่าเป็น admin?
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(ERole.Admin)
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<User> {
     try {

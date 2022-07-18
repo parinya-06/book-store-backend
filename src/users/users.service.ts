@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model, SortOrder } from 'mongoose'
 
+import { ERole } from './enums/enum-role'
 import { UpdateUserDTO } from './dto/update-user-dto'
 import { User, UserDocument } from './schemas/user.schema'
 
@@ -46,5 +47,10 @@ export class UsersService {
 
   async delete(id: string): Promise<User> {
     return this.userModel.findByIdAndRemove({ _id: id }).lean()
+  }
+
+  static matchRoles(roles: ERole[], userRoles: ERole) {
+    console.log(roles.includes(userRoles))
+    return roles.includes(userRoles)
   }
 }

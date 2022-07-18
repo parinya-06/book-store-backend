@@ -35,7 +35,11 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { username: user.username, sub: user._id }
+    const payload = {
+      username: user.username,
+      roles: user.roles,
+      sub: user._id,
+    }
     const tokens = await this.getTokens(payload)
     return tokens
   }
