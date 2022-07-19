@@ -1,7 +1,9 @@
 import { JwtModule } from '@nestjs/jwt'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { PassportModule } from '@nestjs/passport'
 import { CacheModule, Module } from '@nestjs/common'
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module'
+import redisStore from 'cache-manager-redis-store'
 
 import { jwtConstants } from './constants'
 import { AuthService } from './auth.service'
@@ -16,7 +18,16 @@ import { User, UserSchema } from '../users/schemas/user.schema'
   imports: [
     UsersModule,
     PassportModule,
-    CacheModule.register(),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('redisHost'),
+        port: configService.get<number>('redisPort'),
+        ttl: configService.get<number>('redisTtl'),
+      }),
+      inject: [ConfigService],
+    }),
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '15m' },

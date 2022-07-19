@@ -61,7 +61,7 @@ export class AuthService {
 
   async setBanIpUser(ip: string, value?: boolean): Promise<any> {
     const key = `baned:${ip}`
-    return this.cacheManager.set(key, value, 30)
+    return this.cacheManager.set(key, value, { ttl: 30 })
   }
 
   async getCountWrongPassword(ip: string, defaultValue = 0): Promise<number> {
@@ -72,7 +72,7 @@ export class AuthService {
 
   async setCountWrongPassword(ip: string, count: number): Promise<any> {
     const key = `countWrongPassword:${ip}`
-    return this.cacheManager.set(key, count, 0)
+    return this.cacheManager.set(key, count, { ttl: 0 })
   }
 
   async deleteCountWrongPassword(ip: string): Promise<any> {
