@@ -8,7 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator'
-import { ERole } from '../enums/enum-role'
+import { ERole } from '../../users/enums/enum-role'
 
 class CreateUserDTO {
   @ApiProperty({

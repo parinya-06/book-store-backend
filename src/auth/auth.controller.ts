@@ -1,22 +1,24 @@
 import { ConfigService } from '@nestjs/config'
 import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import {
-  Body,
-  Controller,
-  InternalServerErrorException,
-  Logger,
   Post,
+  Body,
+  Logger,
   Request,
   UseGuards,
+  Controller,
+  InternalServerErrorException,
 } from '@nestjs/common'
 import bcrypt from 'bcrypt'
 
 import LoginDTO from './dto/login.dto'
 import { AuthService } from './auth.service'
+import CreateUserDTO from './dto/create-user.dto'
+import { LoginEntity } from './entities/login.entity'
 import { LocalAuthGuard } from './guards/local-auth.guard'
+import { CreateUserEntity } from './entities/create-user.entity'
 
 import { User } from '../users/schemas/user.schema'
-import CreateUserDTO from '../users/dto/create-user.dto'
 import { RegisterValidationPipe } from '../pipes/register-validation.pipe'
 
 @ApiTags('auth')
@@ -32,14 +34,15 @@ export class AuthController {
   @Post('login')
   @ApiBody({ type: LoginDTO })
   @ApiCreatedResponse({
-    description: 'The record has been successfully logined.',
-    type: LoginDTO,
+    status: 200,
+    description: 'The record has been successfully login.',
+    type: LoginEntity,
   })
-  async login(@Request() req) {
+  async login(@Request() req): Promise<LoginEntity> {
     try {
       return this.authService.login(req.user)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.message)
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -48,19 +51,24 @@ export class AuthController {
 
   //เพิ่มข้อมูลสมาชิก
   @Post('register')
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'The create user successfully',
+    type: CreateUserEntity,
+  })
   async create(
     @Body(RegisterValidationPipe) createUserDTO: CreateUserDTO,
   ): Promise<User> {
     try {
-      const saltOrRounds = this.configService.get('saltOrRounds')
+      const hasSaltSize = this.configService.get('hasSaltSize')
       const { password } = createUserDTO
-      const hashedPassword = await bcrypt.hash(password, saltOrRounds)
+      const hashedPassword = await bcrypt.hash(password, hasSaltSize)
       return this.authService.create({
         ...createUserDTO,
         password: hashedPassword,
       })
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error.message)
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })

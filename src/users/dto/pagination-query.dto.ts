@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger'
 import dayjs from 'dayjs'
 import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator'
 
-export class PaginationQueryDto {
+export class QueryUsersDTO {
   @ApiPropertyOptional({
     type: Number,
   })

@@ -15,8 +15,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   //login ผิดพลาด 3 ครั้งจะถูกระงับ 30 วินาที
   async validate(req: any, username: string, password: string): Promise<any> {
-    const ip = req.ip
-    const isBanedIp = await this.authService.getBanIpUser(`${ip}`)
+    const ip = String(req.ip)
+    const isBanedIp = await this.authService.getBanIpUser(ip)
     if (isBanedIp) {
       throw new ForbiddenException({
         message: `User has been blocked!!!,Please wait 30 seconds.`,
@@ -24,12 +24,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     }
     const user = await this.authService.validateUser(username, password)
     if (!user) {
-      const count = (await this.authService.getCountWrongPassword(`${ip}`)) ?? 0
-      const wrong = count + 1
-      await this.authService.setCountWrongPassword(`${ip}`, wrong, 0)
-      if (wrong >= 3) {
-        await this.authService.setBanIpUser(`${ip}`, true, 30)
-        await this.authService.deleteCountWrongPassword(`${ip}`)
+      let countWrongPassword = await this.authService.getCountWrongPassword(ip)
+      countWrongPassword += 1
+      await this.authService.setCountWrongPassword(ip, countWrongPassword)
+      if (countWrongPassword >= 3) {
+        await this.authService.setBanIpUser(ip, true)
+        await this.authService.deleteCountWrongPassword(ip)
         throw new UnauthorizedException({
           message: `User has been blocked!!!,Please wait 30 seconds.`,
         })

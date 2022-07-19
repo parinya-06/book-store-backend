@@ -1,30 +1,39 @@
 import {
-  Body,
-  Controller,
-  Delete,
   Get,
-  InternalServerErrorException,
-  Logger,
-  Param,
   Put,
-  Query,
   Req,
+  Body,
+  Param,
+  Query,
+  Delete,
+  Logger,
   UseGuards,
+  Controller,
+  InternalServerErrorException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger'
+import {
+  ApiBody,
+  ApiTags,
+  ApiBearerAuth,
+  ApiCreatedResponse,
+} from '@nestjs/swagger'
 import * as bcrypt from 'bcrypt'
 import { FilterQuery } from 'mongoose'
 
 import { ERole } from './enums/enum-role'
 import { User } from './schemas/user.schema'
 import { UsersService } from './users.service'
-import CreateUserDTO from './dto/create-user.dto'
 import { RolesGuard } from './guards/roles.guard'
 import { Roles } from './decorators/roles.decorator'
-import { UpdateUserDTO } from './dto/update-user-dto'
+import { UpdateUserDto } from './dto/update-user.dto'
+import { QueryUsersDTO } from './dto/pagination-query.dto'
 import UpdateEnableUserDTO from './dto/updateEnable-user.dto'
-import { PaginationQueryDto } from './dto/pagination-query.dto'
+import { QueryUsersEntity } from './entities/query-users.entity'
+import { UpdateUserEntity } from './entities/update-user.entity'
+import { UpdatePasswordUserDto } from './dto/update-password-user.dto'
+import { UpdateEnableUserEntity } from './entities/update-enable-user.entity'
+import { UpdatePasswordUserEntity } from './entities/update-password-user.entity'
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
@@ -32,6 +41,7 @@ import { UpdateEnableUserValidationPipe } from '../pipes/updateEnableUser-valida
 
 @ApiTags('users')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(
@@ -41,10 +51,15 @@ export class UsersController {
   private readonly logger = new Logger(UsersController.name)
 
   //filter จาก ชื่อผู้ใช้งาน ชื่อ-นามสกุล, รายงานสมาชิกใหม่
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(ERole.Admin)
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'The query users success',
+    type: QueryUsersEntity,
+  })
   @Get()
-  async getUsers(@Query() query: PaginationQueryDto): Promise<any> {
+  async getUsers(@Query() query: QueryUsersDTO): Promise<any> {
     const {
       page,
       perPage,
@@ -96,24 +111,19 @@ export class UsersController {
   }
 
   //แก้ไขข้อมูลสมาชิก
-  @UseGuards(JwtAuthGuard)
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'The update firstname and lastname user success',
+    type: UpdateUserEntity,
+  })
   @Put()
-  @ApiBody({ type: CreateUserDTO })
-  async update(
+  @ApiBody({ type: UpdateUserDto })
+  async updateUser(
     @Req() req,
-    @Body(UpdateValidationPipe) updateUsersDTO: UpdateUserDTO,
-  ): Promise<UpdateUserDTO> {
+    @Body(UpdateValidationPipe) updateUsersDTO: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
     try {
       const { userId } = req.user
-      const { password } = updateUsersDTO
-      if (password) {
-        const saltOrRounds = this.configService.get('saltOrRounds')
-        const hashedPassword = await bcrypt.hash(password, saltOrRounds)
-        return this.usersService.update(userId, {
-          ...updateUsersDTO,
-          password: hashedPassword,
-        })
-      }
       return this.usersService.update(userId, updateUsersDTO)
     } catch (error) {
       this.logger.error(error)
@@ -123,15 +133,51 @@ export class UsersController {
     }
   }
 
+  //แก้ไขรหัสผ่าน
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'The update firstname and lastname user success',
+    type: UpdatePasswordUserEntity,
+  })
+  @Put('password')
+  @ApiBody({ type: UpdatePasswordUserDto })
+  async updatePasswordUser(
+    @Req() req,
+    @Body(UpdateValidationPipe) updatePasswordUserDto: UpdatePasswordUserDto,
+  ): Promise<UpdateUserDto | UpdatePasswordUserEntity> {
+    try {
+      const { userId } = req.user
+      const { password } = updatePasswordUserDto
+      if (password) {
+        const hasSaltSize = this.configService.get('hasSaltSize')
+        const hashedPassword = await bcrypt.hash(password, hasSaltSize)
+        return this.usersService.update(userId, {
+          ...updatePasswordUserDto,
+          password: hashedPassword,
+        })
+      }
+    } catch (error) {
+      this.logger.error(error)
+      throw new InternalServerErrorException({
+        message: error.message ?? error,
+      })
+    }
+  }
+
   //ระงับการใช้งานของสมาชิก
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(ERole.Admin)
   @ApiBody({ type: UpdateEnableUserDTO })
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'The update enabled user success',
+    type: UpdateEnableUserEntity,
+  })
   @Put(':id/enabled')
   async updateEnableUser(
     @Param('id', UpdateEnableUserValidationPipe) id: string,
-    @Body() updateUsersDTO: UpdateUserDTO,
-  ): Promise<UpdateUserDTO> {
+    @Body() updateUsersDTO: UpdateUserDto,
+  ): Promise<UpdateUserDto> {
     try {
       return this.usersService.update(id, updateUsersDTO)
     } catch (error) {
@@ -143,7 +189,7 @@ export class UsersController {
   }
 
   //ลบข้อมูลสมาชิก
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(ERole.Admin)
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<User> {

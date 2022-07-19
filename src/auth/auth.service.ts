@@ -5,8 +5,8 @@ import bcrypt from 'bcrypt'
 import { Model } from 'mongoose'
 import { Cache } from 'cache-manager'
 
+import CreateUserDTO from './dto/create-user.dto'
 import { UsersService } from '../users/users.service'
-import CreateUserDTO from '../users/dto/create-user.dto'
 import { User, UserDocument } from '../users/schemas/user.schema'
 
 @Injectable()
@@ -36,15 +36,14 @@ export class AuthService {
 
   async login(user: any) {
     const payload = {
-      username: user.username,
       roles: user.roles,
       sub: user._id,
     }
-    const tokens = await this.getTokens(payload)
+    const tokens = await this.createTokens(payload)
     return tokens
   }
 
-  async getTokens(payload: object) {
+  async createTokens(payload: object) {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, { expiresIn: '7d' }),
@@ -56,30 +55,28 @@ export class AuthService {
   }
 
   async getBanIpUser(ip: string): Promise<any> {
-    return this.cacheManager.get(`baned:${ip}`)
+    const key = `baned:${ip}`
+    return this.cacheManager.get(key)
   }
 
-  async setBanIpUser(
-    ip: string,
-    value?: number | boolean,
-    ttl?: number,
-  ): Promise<any> {
-    return this.cacheManager.set(`baned:${ip}`, value, ttl)
+  async setBanIpUser(ip: string, value?: boolean): Promise<any> {
+    const key = `baned:${ip}`
+    return this.cacheManager.set(key, value, 30)
   }
 
-  async getCountWrongPassword(ip: string): Promise<any> {
-    return this.cacheManager.get(`countWrongPassword:${ip}`)
+  async getCountWrongPassword(ip: string, defaultValue = 0): Promise<number> {
+    const key = `countWrongPassword:${ip}`
+    const countWrongPassword = await this.cacheManager.get<number>(key)
+    return countWrongPassword ?? defaultValue
   }
 
-  async setCountWrongPassword(
-    ip: string,
-    value?: any,
-    ttl?: number,
-  ): Promise<any> {
-    return this.cacheManager.set(`countWrongPassword:${ip}`, value, ttl)
+  async setCountWrongPassword(ip: string, count: number): Promise<any> {
+    const key = `countWrongPassword:${ip}`
+    return this.cacheManager.set(key, count, 0)
   }
 
   async deleteCountWrongPassword(ip: string): Promise<any> {
-    return this.cacheManager.del(`countWrongPassword:${ip}`)
+    const key = `countWrongPassword:${ip}`
+    return this.cacheManager.del(key)
   }
 }

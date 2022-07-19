@@ -3,8 +3,9 @@ import { InjectModel } from '@nestjs/mongoose'
 import { FilterQuery, Model, SortOrder } from 'mongoose'
 
 import { ERole } from './enums/enum-role'
-import { UpdateUserDTO } from './dto/update-user-dto'
+import { UpdateUserDto } from './dto/update-user.dto'
 import { User, UserDocument } from './schemas/user.schema'
+import { UpdatePasswordUserDto } from './dto/update-password-user.dto'
 
 @Injectable()
 export class UsersService {
@@ -38,8 +39,8 @@ export class UsersService {
 
   async update(
     id: string,
-    updateUsersDTO: UpdateUserDTO,
-  ): Promise<UpdateUserDTO> {
+    updateUsersDTO: UpdateUserDto | UpdatePasswordUserDto,
+  ): Promise<UpdateUserDto> {
     return this.userModel
       .findOneAndUpdate({ _id: id }, { $set: updateUsersDTO }, { new: true })
       .lean()
@@ -50,6 +51,6 @@ export class UsersService {
   }
 
   static matchRoles(roles: ERole[], userRoles: ERole) {
-    return roles.includes(userRoles)
+    return roles.some((role) => userRoles.includes(role))
   }
 }
