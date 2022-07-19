@@ -1,6 +1,6 @@
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 5000,
-  hasSaltSize: parseInt(process.env.SALTROUNDS),
+  hasSaltSize: parseInt(process.env.SALTSIZE) || 20,
   secretJwt: process.env.SECRET_JWT,
   database: {
     MONGODB_URI: process.env.MONGODB_URI,
