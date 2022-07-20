@@ -1,6 +1,11 @@
 import { JwtService } from '@nestjs/jwt'
 import { InjectModel } from '@nestjs/mongoose'
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common'
+import {
+  Inject,
+  Injectable,
+  CACHE_MANAGER,
+  ForbiddenException,
+} from '@nestjs/common'
 import bcrypt from 'bcrypt'
 import { Model } from 'mongoose'
 import { Cache } from 'cache-manager'
@@ -27,6 +32,10 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.usersService.findOneByUsername(username)
+    if (!UsersService.isActive(user)) {
+      throw new ForbiddenException()
+    }
+
     const { password: checkPassword } = user
     const isMatch = await bcrypt.compare(password, checkPassword)
     if (user && isMatch) {
