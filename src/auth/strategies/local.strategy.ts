@@ -1,11 +1,13 @@
 import {
-  ForbiddenException,
   Injectable,
+  ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { Strategy } from 'passport-local'
+
 import { AuthService } from '../auth.service'
+import { UserEntity } from '../entities/user.entity'
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -14,7 +16,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   //login ผิดพลาด 3 ครั้งจะถูกระงับ 30 วินาที
-  async validate(req: any, username: string, password: string): Promise<any> {
+  async validate(
+    req: any,
+    username: string,
+    password: string,
+  ): Promise<UserEntity> {
     const ip = String(req.ip)
     const isBanedIp = await this.authService.getBanIpUser(ip)
     if (isBanedIp) {
@@ -24,12 +30,18 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     }
     const user = await this.authService.validateUser(username, password)
     if (!user) {
-      let countWrongPassword = await this.authService.getCountWrongPassword(ip)
-      countWrongPassword += 1
-      await this.authService.setCountWrongPassword(ip, countWrongPassword)
-      if (countWrongPassword >= 3) {
-        await this.authService.setBanIpUser(ip, true)
-        await this.authService.deleteCountWrongPassword(ip)
+      let getCountWrongPasswordByIp =
+        await this.authService.getCountWrongPassword(ip)
+      getCountWrongPasswordByIp += 1
+      await this.authService.setCountWrongPassword(
+        ip,
+        getCountWrongPasswordByIp,
+      )
+      if (getCountWrongPasswordByIp >= 3) {
+        await Promise.all([
+          await this.authService.isBanedIp(ip, true),
+          await this.authService.deleteCountWrongPassword(ip),
+        ])
         throw new UnauthorizedException({
           message: `User has been blocked!!!,Please wait 30 seconds.`,
         })
