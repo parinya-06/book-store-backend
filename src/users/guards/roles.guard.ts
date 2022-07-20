@@ -20,9 +20,8 @@ export class RolesGuard implements CanActivate {
       return true
     }
     const request = context.switchToHttp().getRequest()
-    const user = await request.user
-    const { roles: userRoles } = user
+    const { user } = request
 
-    return UsersService.matchRoles(roles, userRoles)
+    return UsersService.matchRoles(roles, user.roles)
   }
 }
