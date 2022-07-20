@@ -1,14 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Length,
-  MaxLength,
-  MinLength,
-} from 'class-validator'
-import { ERole } from '../../users/enums/enum-role'
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator'
 
 class CreateUserDTO {
   @ApiProperty({
@@ -17,8 +8,7 @@ class CreateUserDTO {
   })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
-  @MaxLength(15)
+  @Length(6, 15)
   username: string
 
   @ApiProperty({
@@ -45,24 +35,7 @@ class CreateUserDTO {
   })
   @IsOptional()
   @IsString()
-  @Length(1, 20)
-  lastname: string
-
-  @ApiPropertyOptional({
-    type: String,
-    example: ERole.User,
-    enum: ERole,
-  })
-  @IsOptional()
-  @IsString()
-  roles: ERole
-
-  @ApiPropertyOptional({
-    type: Boolean,
-    example: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  enabled: boolean
+  @Length(0, 20)
+  lastname?: string
 }
 export default CreateUserDTO
