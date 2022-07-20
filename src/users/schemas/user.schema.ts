@@ -69,6 +69,7 @@ export class User {
     example: 'user',
   })
   @Prop({
+    index: true,
     type: String,
     default: ERole.User,
   })
@@ -89,6 +90,7 @@ export class User {
     example: true,
   })
   @Prop({
+    index: true,
     type: Boolean,
     default: true,
   })
