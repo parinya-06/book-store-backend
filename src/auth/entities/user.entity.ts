@@ -1,51 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-export class CreateUserEntity {
+export class UserEntity {
   @ApiProperty({
     type: String,
-    required: true,
     example: '62d62832a8ced896dd692389',
   })
   _id: string
 
   @ApiProperty({
     type: String,
-    required: true,
     example: 'test123',
   })
   username: string
 
   @ApiProperty({
     type: String,
-    required: true,
-    example: '$2b$10$K7XsFyBpB1iD.RhAk1GYYuXm2pVAbvi9e4kbogrGhZ4f7j2AzPuq.',
-  })
-  password: string
-
-  @ApiProperty({
-    type: String,
-    required: true,
     example: 'test',
   })
   firstname: string
 
   @ApiProperty({
     type: String,
-    required: true,
     example: '123',
   })
   lastname: string
 
   @ApiProperty({
     type: String,
-    required: true,
     example: 'user',
   })
   roles: string
 
   @ApiProperty({
     type: Boolean,
-    required: true,
     example: false,
   })
   enabled: false
