@@ -1,11 +1,10 @@
 import { JwtModule } from '@nestjs/jwt'
-import { ConfigModule, ConfigService } from '@nestjs/config'
 import { PassportModule } from '@nestjs/passport'
 import { CacheModule, Module } from '@nestjs/common'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module'
 import redisStore from 'cache-manager-redis-store'
 
-import { jwtConstants } from './constants'
 import { AuthService } from './auth.service'
 import { AuthController } from './auth.controller'
 import { JwtStrategy } from './strategies/jwt.strategy'
@@ -22,15 +21,19 @@ import { User, UserSchema } from '../users/schemas/user.schema'
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: configService.get<string>('redisHost'),
-        port: configService.get<number>('redisPort'),
-        ttl: configService.get<number>('redisTtl'),
+        host: configService.get<string>('database.redisHost'),
+        port: configService.get<number>('database.redisPort'),
+        ttl: configService.get<number>('database.redisTtl'),
       }),
       inject: [ConfigService],
     }),
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '15m' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('authentication.secretJwt'),
+        signOptions: configService.get('authentication.signOptions'),
+      }),
+      inject: [ConfigService],
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
