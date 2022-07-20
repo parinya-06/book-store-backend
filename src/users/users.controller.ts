@@ -59,7 +59,7 @@ export class UsersController {
     type: QueryUsersEntity,
   })
   @Get()
-  async getUsers(@Query() query: QueryUsersDTO): Promise<any> {
+  async getUsers(@Query() query: QueryUsersDTO): Promise<QueryUsersEntity> {
     const {
       page,
       perPage,

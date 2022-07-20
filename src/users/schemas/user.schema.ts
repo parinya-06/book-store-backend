@@ -84,6 +84,10 @@ export class User {
   })
   enabled?: boolean
 
+  @ApiProperty({
+    type: Boolean,
+    example: true,
+  })
   @Prop({
     type: Boolean,
     default: true,

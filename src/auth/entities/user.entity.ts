@@ -38,6 +38,12 @@ export class UserEntity {
   enabled: false
 
   @ApiProperty({
+    type: Boolean,
+    example: true,
+  })
+  status: true
+
+  @ApiProperty({
     type: String,
     required: true,
     example: '2022-07-19T03:42:42.049Z',
