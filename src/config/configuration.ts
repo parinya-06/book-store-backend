@@ -1,7 +1,12 @@
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 5000,
   hasSaltSize: parseInt(process.env.SALTSIZE) || 20,
-  secretJwt: process.env.SECRET_JWT,
+  authentication: {
+    secretJwt: process.env.SECRET_JWT || 'super_secret',
+    signOptions: {
+      expiresIn: '1d',
+    },
+  },
   database: {
     MONGODB_URI: process.env.MONGODB_URI,
     host: process.env.DATABASE_HOST,
