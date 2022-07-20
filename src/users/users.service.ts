@@ -46,8 +46,14 @@ export class UsersService {
       .lean()
   }
 
-  async delete(id: string): Promise<User> {
-    return this.userModel.findByIdAndRemove({ _id: id }).lean()
+  async delete(id: string) {
+    await this.userModel
+      .findOneAndUpdate({ _id: id }, { $set: { status: false } }, { new: true })
+      .lean()
+  }
+
+  static isActive(user: User): boolean {
+    return user?.status === true
   }
 
   static matchRoles(roles: ERole[], userRoles: ERole) {
