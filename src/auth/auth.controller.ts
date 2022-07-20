@@ -1,5 +1,3 @@
-import { ConfigService } from '@nestjs/config'
-import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import {
   Post,
   Body,
@@ -9,14 +7,16 @@ import {
   Controller,
   InternalServerErrorException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger'
 import bcrypt from 'bcrypt'
 
 import LoginDTO from './dto/login.dto'
 import { AuthService } from './auth.service'
 import CreateUserDTO from './dto/create-user.dto'
+import { UserEntity } from './entities/user.entity'
 import { LoginEntity } from './entities/login.entity'
 import { LocalAuthGuard } from './guards/local-auth.guard'
-import { CreateUserEntity } from './entities/create-user.entity'
 
 import { User } from '../users/schemas/user.schema'
 import { RegisterValidationPipe } from '../pipes/register-validation.pipe'
@@ -42,7 +42,7 @@ export class AuthController {
     try {
       return this.authService.login(req.user)
     } catch (error) {
-      this.logger.error(error.message)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -54,21 +54,21 @@ export class AuthController {
   @ApiCreatedResponse({
     status: 200,
     description: 'The create user successfully',
-    type: CreateUserEntity,
+    type: UserEntity,
   })
   async create(
     @Body(RegisterValidationPipe) createUserDTO: CreateUserDTO,
   ): Promise<User> {
     try {
-      const hasSaltSize = this.configService.get('hasSaltSize')
       const { password } = createUserDTO
+      const hasSaltSize = this.configService.get('hasSaltSize')
       const hashedPassword = await bcrypt.hash(password, hasSaltSize)
       return this.authService.create({
         ...createUserDTO,
         password: hashedPassword,
       })
     } catch (error) {
-      this.logger.error(error.message)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
