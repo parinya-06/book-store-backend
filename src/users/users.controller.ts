@@ -1,7 +1,6 @@
 import {
   Get,
   Put,
-  Req,
   Body,
   Param,
   Query,
@@ -11,14 +10,14 @@ import {
   Controller,
   InternalServerErrorException,
 } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import {
   ApiBody,
   ApiTags,
   ApiBearerAuth,
   ApiCreatedResponse,
 } from '@nestjs/swagger'
-import * as bcrypt from 'bcrypt'
+import { ConfigService } from '@nestjs/config'
+import bcrypt from 'bcrypt'
 import { FilterQuery } from 'mongoose'
 
 import { ERole } from './enums/enum-role'
@@ -27,6 +26,7 @@ import { UsersService } from './users.service'
 import { RolesGuard } from './guards/roles.guard'
 import { Roles } from './decorators/roles.decorator'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { ReqUser } from './decorators/req-user.decorator'
 import { QueryUsersDTO } from './dto/pagination-query.dto'
 import UpdateEnableUserDTO from './dto/updateEnable-user.dto'
 import { QueryUsersEntity } from './entities/query-users.entity'
@@ -35,8 +35,8 @@ import { UpdatePasswordUserDto } from './dto/update-password-user.dto'
 import { UpdateEnableUserEntity } from './entities/update-enable-user.entity'
 import { UpdatePasswordUserEntity } from './entities/update-password-user.entity'
 
+import { UserEntity } from '../auth/entities/user.entity'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
-import { UpdateValidationPipe } from '../pipes/update-validation.pipe'
 import { UpdateEnableUserValidationPipe } from '../pipes/updateEnableUser-validation.pipe'
 
 @ApiTags('users')
@@ -103,7 +103,7 @@ export class UsersController {
         count,
       }
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -119,14 +119,14 @@ export class UsersController {
   @Put()
   @ApiBody({ type: UpdateUserDto })
   async updateUser(
-    @Req() req,
-    @Body(UpdateValidationPipe) updateUsersDTO: UpdateUserDto,
+    @ReqUser() reqUser: UserEntity,
+    @Body() updateUsersDTO: UpdateUserDto,
   ): Promise<UpdateUserDto> {
     try {
-      const { userId } = req.user
+      const { _id: userId } = reqUser
       return this.usersService.update(userId, updateUsersDTO)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -142,22 +142,20 @@ export class UsersController {
   @Put('password')
   @ApiBody({ type: UpdatePasswordUserDto })
   async updatePasswordUser(
-    @Req() req,
-    @Body(UpdateValidationPipe) updatePasswordUserDto: UpdatePasswordUserDto,
-  ): Promise<UpdateUserDto | UpdatePasswordUserEntity> {
+    @ReqUser() reqUser: UserEntity,
+    @Body() updatePasswordUserDto: UpdatePasswordUserDto,
+  ): Promise<UpdateUserDto> {
     try {
-      const { userId } = req.user
+      const { _id: userId } = reqUser
       const { password } = updatePasswordUserDto
-      if (password) {
-        const hasSaltSize = this.configService.get('hasSaltSize')
-        const hashedPassword = await bcrypt.hash(password, hasSaltSize)
-        return this.usersService.update(userId, {
-          ...updatePasswordUserDto,
-          password: hashedPassword,
-        })
-      }
+      const hasSaltSize = this.configService.get('hasSaltSize')
+      const hashedPassword = await bcrypt.hash(password, hasSaltSize)
+      return this.usersService.update(userId, {
+        ...updatePasswordUserDto,
+        password: hashedPassword,
+      })
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -181,7 +179,7 @@ export class UsersController {
     try {
       return this.usersService.update(id, updateUsersDTO)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
@@ -192,11 +190,11 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(ERole.Admin)
   @Delete(':id')
-  async delete(@Param('id') id: string): Promise<User> {
+  async delete(@Param('id') id: string): Promise<void> {
     try {
       return this.usersService.delete(id)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error?.message ?? JSON.stringify(error))
       throw new InternalServerErrorException({
         message: error.message ?? error,
       })
