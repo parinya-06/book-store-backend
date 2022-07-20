@@ -5,6 +5,7 @@ import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator'
 export class QueryUsersDTO {
   @ApiPropertyOptional({
     type: Number,
+    example: 1,
   })
   @IsOptional()
   @IsNumber()
@@ -12,6 +13,7 @@ export class QueryUsersDTO {
 
   @ApiPropertyOptional({
     type: Number,
+    example: 10,
   })
   @IsOptional()
   @IsNumber()
