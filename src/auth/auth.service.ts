@@ -6,6 +6,9 @@ import { Model } from 'mongoose'
 import { Cache } from 'cache-manager'
 
 import CreateUserDTO from './dto/create-user.dto'
+import { UserEntity } from './entities/user.entity'
+import { LoginEntity } from './entities/login.entity'
+
 import { UsersService } from '../users/users.service'
 import { User, UserDocument } from '../users/schemas/user.schema'
 
@@ -27,41 +30,34 @@ export class AuthService {
     const { password: checkPassword } = user
     const isMatch = await bcrypt.compare(password, checkPassword)
     if (user && isMatch) {
-      await this.cacheManager.reset()
-      const { password, ...result } = user
-      return result
+      return user
     }
     return null
   }
 
-  async login(user: any) {
+  async login(user: UserEntity): Promise<LoginEntity> {
     const payload = {
-      roles: user.roles,
-      sub: user._id,
+      userId: user._id,
     }
-    const tokens = await this.createTokens(payload)
-    return tokens
+    return this.createTokens(payload)
   }
 
-  async createTokens(payload: object) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, { expiresIn: '7d' }),
-    ])
+  async createTokens(payload): Promise<LoginEntity> {
     return {
-      accessToken,
-      refreshToken,
+      accessToken: this.jwtService.sign(payload),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
     }
   }
 
-  async getBanIpUser(ip: string): Promise<any> {
+  async getBanIpUser(ip: string, defaultValue = false): Promise<boolean> {
     const key = `baned:${ip}`
-    return this.cacheManager.get(key)
+    const banIp = await this.cacheManager.get<boolean>(key)
+    return banIp ?? defaultValue
   }
 
-  async setBanIpUser(ip: string, value?: boolean): Promise<any> {
+  async isBanedIp(ip: string, value: boolean): Promise<void> {
     const key = `baned:${ip}`
-    return this.cacheManager.set(key, value, { ttl: 30 })
+    await this.cacheManager.set(key, value, { ttl: 30 })
   }
 
   async getCountWrongPassword(ip: string, defaultValue = 0): Promise<number> {
@@ -70,12 +66,12 @@ export class AuthService {
     return countWrongPassword ?? defaultValue
   }
 
-  async setCountWrongPassword(ip: string, count: number): Promise<any> {
+  async setCountWrongPassword(ip: string, count: number): Promise<number> {
     const key = `countWrongPassword:${ip}`
     return this.cacheManager.set(key, count, { ttl: 0 })
   }
 
-  async deleteCountWrongPassword(ip: string): Promise<any> {
+  async deleteCountWrongPassword(ip: string): Promise<void> {
     const key = `countWrongPassword:${ip}`
     return this.cacheManager.del(key)
   }
