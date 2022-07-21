@@ -6,10 +6,17 @@ import { ERole } from './enums/enum-role'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User, UserDocument } from './schemas/user.schema'
 import { UpdatePasswordUserDto } from './dto/update-password-user.dto'
+import CreateUserDTO from './dto/create-user.dto'
+import UpdateEnableUserDTO from './dto/updateEnable-user.dto'
+import { UserStatus } from './enums/enum-status'
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
+  async create(createUserDTO: CreateUserDTO): Promise<User> {
+    return this.userModel.create(createUserDTO)
+  }
 
   async pagination(
     filter: FilterQuery<User>,
@@ -23,17 +30,17 @@ export class UsersService {
         .sort(sort)
         .skip((page - 1) * +perPage)
         .limit(+perPage)
-        .select({ passcode: 0 })
+        .select({ password: 0 })
         .lean(),
       this.userModel.countDocuments(filter as User),
     ])
   }
 
-  async findOneById(id: string): Promise<User> {
+  async findById(id: string): Promise<User> {
     return this.userModel.findOne({ _id: id }).lean()
   }
 
-  async findOneByUsername(username: string): Promise<User> {
+  async findByUsername(username: string): Promise<User> {
     return this.userModel.findOne({ username }).lean()
   }
 
@@ -46,14 +53,34 @@ export class UsersService {
       .lean()
   }
 
-  async delete(id: string) {
+  async setEnable(id: string): Promise<UpdateEnableUserDTO> {
+    return this.userModel
+      .findOneAndUpdate({ _id: id }, { $set: { enabled: true } }, { new: true })
+      .lean()
+  }
+
+  async setDisable(id: string): Promise<UpdateEnableUserDTO> {
+    return this.userModel
+      .findOneAndUpdate(
+        { _id: id },
+        { $set: { enabled: false } },
+        { new: true },
+      )
+      .lean()
+  }
+
+  async deleteAndSetStatusUser(id: string) {
     await this.userModel
-      .findOneAndUpdate({ _id: id }, { $set: { status: false } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id },
+        { $set: { status: UserStatus.DISABLED } },
+        { new: true },
+      )
       .lean()
   }
 
   static isActive(user: User): boolean {
-    return user?.status === true
+    return user?.status === UserStatus.ACTIVE
   }
 
   static matchRoles(roles: ERole[], userRoles: ERole) {

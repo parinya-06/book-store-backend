@@ -7,7 +7,7 @@ export class UpdateEnableUserValidationPipe implements PipeTransform {
 
   async transform(value: any): Promise<User> {
     const userId = value
-    const existingUsers = await this.usersService.findOneById(userId)
+    const existingUsers = await this.usersService.findById(userId)
     if (!existingUsers) {
       throw new BadRequestException(`User not found`)
     }

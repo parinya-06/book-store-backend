@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const { userId } = payload
     let user: User
     try {
-      user = await this.usersService.findOneById(userId)
+      user = await this.usersService.findById(userId)
     } catch (error) {
       throw new InternalServerErrorException()
     }
