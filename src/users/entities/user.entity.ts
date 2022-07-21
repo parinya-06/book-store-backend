@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
+import { ERole } from '../enums/enum-role'
+import { UserStatus } from '../enums/enum-status'
 
 export class UserEntity {
   @ApiProperty({
@@ -23,37 +25,37 @@ export class UserEntity {
     type: String,
     example: '123',
   })
-  lastname: string
+  lastname?: string
 
   @ApiProperty({
     type: String,
-    example: 'user',
+    example: ERole.User,
   })
-  roles: string
+  role: ERole
 
   @ApiProperty({
     type: Boolean,
     example: false,
   })
-  enabled: false
+  enabled: boolean
 
   @ApiProperty({
-    type: Boolean,
-    example: true,
+    type: String,
+    example: UserStatus.ACTIVE,
   })
-  status: true
+  status: UserStatus
 
   @ApiProperty({
     type: String,
     required: true,
     example: '2022-07-19T03:42:42.049Z',
   })
-  createdAt: string
+  createdAt: Date
 
   @ApiProperty({
     type: String,
     required: true,
     example: '2022-07-19T03:42:42.049Z',
   })
-  updatedAt: string
+  updatedAt: Date
 }

@@ -3,6 +3,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { Document } from 'mongoose'
 
 import { ERole } from '../enums/enum-role'
+import { UserStatus } from '../enums/enum-status'
 
 export type UserDocument = User & Document
 @Schema({
@@ -53,16 +54,15 @@ export class User {
 
   @ApiProperty({
     type: String,
-    required: false,
+    required: true,
     example: '001',
   })
   @Prop({
     index: true,
     type: String,
-    required: false,
-    default: null,
+    required: true,
   })
-  lastname?: string
+  lastname: string
 
   @ApiProperty({
     type: String,
@@ -73,7 +73,7 @@ export class User {
     type: String,
     default: ERole.User,
   })
-  roles?: ERole
+  role?: ERole
 
   @ApiProperty({
     type: Boolean,
@@ -83,6 +83,7 @@ export class User {
     type: Boolean,
     default: true,
   })
+  //ระงับการใช้งานของสมาชิก
   enabled?: boolean
 
   @ApiProperty({
@@ -91,10 +92,11 @@ export class User {
   })
   @Prop({
     index: true,
-    type: Boolean,
-    default: true,
+    type: String,
+    default: UserStatus.ACTIVE,
   })
-  status?: boolean
+  //ลบสมาชิกเสร็จ update status=false
+  status?: UserStatus
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

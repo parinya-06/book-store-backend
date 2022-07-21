@@ -1,22 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { User } from '../schemas/user.schema'
-import { UserEntity } from '../../auth/entities/user.entity'
+import { UserEntity } from './user.entity'
 
 export class QueryUsersEntity {
   @ApiProperty({
-    type: String,
+    type: Number,
     required: false,
   })
   page: number
 
   @ApiProperty({
-    type: String,
+    type: Number,
     required: false,
   })
   perPage: number
 
   @ApiProperty({
-    type: User,
+    type: [User],
     required: false,
     example: UserEntity,
   })
