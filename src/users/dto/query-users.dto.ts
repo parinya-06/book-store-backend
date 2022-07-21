@@ -41,6 +41,7 @@ export class QueryUsersDTO {
   lastname?: string
 
   @ApiPropertyOptional({
+    type: Date,
     example: dayjs().startOf('days').toISOString(),
   })
   @IsDateString()
@@ -48,6 +49,7 @@ export class QueryUsersDTO {
   startDate?: string
 
   @ApiPropertyOptional({
+    type: Date,
     example: dayjs().endOf('days').toISOString(),
   })
   @IsDateString()

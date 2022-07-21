@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsNotEmpty, IsString, Length } from 'class-validator'
 
 class CreateUserDTO {
   @ApiProperty({
@@ -29,13 +29,13 @@ class CreateUserDTO {
   @Length(1, 20)
   firstname: string
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     type: String,
     example: '001',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  @Length(0, 20)
-  lastname?: string
+  @Length(1, 20)
+  lastname: string
 }
 export default CreateUserDTO
