@@ -16,6 +16,7 @@ async function bootstrap() {
   app.useLogger(app.get(LoggerService))
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true,
       transformOptions: {
         enableImplicitConversion: true,
       },

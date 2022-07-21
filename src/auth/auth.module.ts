@@ -21,9 +21,9 @@ import { User, UserSchema } from '../users/schemas/user.schema'
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        host: configService.get<string>('database.redisHost'),
-        port: configService.get<number>('database.redisPort'),
-        ttl: configService.get<number>('database.redisTtl'),
+        host: configService.get<string>('database.redis.redisHost'),
+        port: configService.get<number>('database.redis.redisPort'),
+        ttl: configService.get<number>('database.redis.redisTtl'),
       }),
       inject: [ConfigService],
     }),
