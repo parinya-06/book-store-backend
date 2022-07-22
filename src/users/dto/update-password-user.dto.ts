@@ -9,5 +9,14 @@ export class UpdatePasswordUserDto {
   @IsString()
   @Length(8, 32)
   @IsNotEmpty()
+  oldPassword: string
+
+  @ApiProperty({
+    type: String,
+    example: 'testing001',
+  })
+  @IsString()
+  @Length(8, 32)
+  @IsNotEmpty()
   password: string
 }

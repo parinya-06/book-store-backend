@@ -178,17 +178,19 @@ export class UsersController {
   ): Promise<UpdateUserDto> {
     try {
       const { _id: userId } = reqUser
-      const { password } = updatePasswordUserDto
+      const { oldPassword, password: newPassword } = updatePasswordUserDto
       const user = await this.usersService.findById(userId)
-      const isNotMatch = await bcrypt.compare(password, user.password)
-      if (isNotMatch) {
-        throw new BadRequestException(`Password duplicate!!!`)
+      const isMatch = await bcrypt.compare(oldPassword, user.password)
+      if (isMatch) {
+        const hasSaltSize = this.configService.get('hasSaltSize')
+        const hashedPassword = await bcrypt.hash(newPassword, hasSaltSize)
+        return this.usersService.update(userId, {
+          ...updatePasswordUserDto,
+          password: hashedPassword,
+        })
       }
-      const hasSaltSize = this.configService.get('hasSaltSize')
-      const hashedPassword = await bcrypt.hash(password, hasSaltSize)
-      return this.usersService.update(userId, {
-        ...updatePasswordUserDto,
-        password: hashedPassword,
+      throw new BadRequestException({
+        message: `Password invalid!!!`,
       })
     } catch (error) {
       this.logger.error(error?.message ?? JSON.stringify(error))
